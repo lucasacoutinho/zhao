@@ -10,7 +10,7 @@ Zhao is a bootstrap release targeting Bend 2.0.16. It follows [Commander.js](htt
 - **Predictable parsing.** Short flags can be grouped, values can be attached, parent options work before and after subcommands, and `--` ends option parsing.
 - **Generated help.** Usage, arguments, options, defaults, and subcommands come from the command definition.
 - **Explicit outcomes.** `parse` returns `Parsed`, `Help`, `Version`, or `Error`. Applications can handle them directly or use `run` for the standard IO behavior.
-- **Laws with proofs.** The package includes 11 stated rules and their proofs, alongside the parser.
+- **Laws with proofs.** The package includes 16 stated rules and their proofs, alongside the parser.
 
 ## Quick start
 
@@ -18,7 +18,7 @@ Import Zhao directly from Bendhub. Bend downloads and verifies the package on th
 
 ```bend
 import Base
-import 0x64a14ed3ebe66ae2700afc3c3bafd113/zhao.bend as Z
+import 0x014d1ec5074b05cc46cbfd40d4033fe1/zhao.bend as Z
 
 def program() -> Z.Command:
   cmd = Z.command("hello")
@@ -75,11 +75,14 @@ Each builder returns a new `Command`. Rebind `cmd` as you add its pieces:
 | `option(cmd, flags, description)` | Add an option |
 | `option_default(cmd, flags, description, value)` | Set a string default for a value-taking option |
 | `required_option(cmd, flags, description)` | Require an option |
+| `repeatable_option(cmd, flags, description)` | Collect one required value per occurrence, in order |
 | `argument(cmd, syntax, description)` | Add a positional argument |
 | `argument_default(cmd, syntax, description, value)` | Set a positional default |
 | `subcommand(parent, child)` | Attach a command |
 
 Options require a long name and may have a one-letter short alias. `--verbose` is a boolean flag, `--no-color` defaults to true and sets false when supplied, `--port <number>` takes a required value, and `--color [name]` takes an optional value. Values stay strings; applications convert and validate domain values.
+
+Use `repeatable_option(cmd, "-I, --include <path>", "Include a directory")` to collect repeated values. `--include src -Ilib --include=` produces `Many{["src", "lib", ""]}`; omitting the option produces `Many{[]}`. Read it with `value.many(get(input, "include"))`. Each occurrence consumes exactly one value, so following positional arguments stay positional.
 
 Arguments use `<required>`, `[optional]`, `<many...>`, or `[many...]` syntax. Required arguments precede optional ones, and a variadic argument comes last.
 

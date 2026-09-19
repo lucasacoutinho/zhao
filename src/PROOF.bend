@@ -19,6 +19,21 @@ def Laws.required_option_preserves_text(text):
 def Laws.repeated_value_uses_last(text):
   {==}
 
+def Laws.repeatable_option_defaults_empty():
+  {==}
+
+def Laws.repeatable_option_preserves_order(first, second):
+  {==}
+
+def Laws.repeatable_option_preserves_attached_empty():
+  {==}
+
+def Laws.repeatable_option_missing_value_is_error():
+  {==}
+
+def Laws.repeatable_option_requires_value_syntax():
+  {==}
+
 def Laws.negated_option_defaults_true():
   {==}
 

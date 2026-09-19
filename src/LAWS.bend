@@ -24,6 +24,23 @@ law repeated_value_uses_last:
   for +text: String
   {Zhao.parse(Zhao.option(Zhao.command("tool"), "--label <value>", ""), ["--label=first", "--label", text]) == Zhao.Parsed{Zhao.Invocation{["tool"], [Zhao.Binding{"label", Zhao.Text{text}}], []}} : Zhao.Outcome}
 
+law repeatable_option_defaults_empty:
+  {Zhao.parse(Zhao.repeatable_option(Zhao.command("tool"), "--include <path>", ""), []) == Zhao.Parsed{Zhao.Invocation{["tool"], [Zhao.Binding{"include", Zhao.Many{[]}}], []}} : Zhao.Outcome}
+
+law repeatable_option_preserves_order:
+  for +first: String
+  for +second: String
+  {Zhao.parse(Zhao.repeatable_option(Zhao.command("tool"), "--include <path>", ""), ["--include", first, "--include", second]) == Zhao.Parsed{Zhao.Invocation{["tool"], [Zhao.Binding{"include", Zhao.Many{[first, second]}}], []}} : Zhao.Outcome}
+
+law repeatable_option_preserves_attached_empty:
+  {Zhao.parse(Zhao.repeatable_option(Zhao.command("tool"), "-i, --include <path>", ""), ["--include=", "-ilast"]) == Zhao.Parsed{Zhao.Invocation{["tool"], [Zhao.Binding{"include", Zhao.Many{["", "last"]}}], []}} : Zhao.Outcome}
+
+law repeatable_option_missing_value_is_error:
+  {Zhao.parse(Zhao.repeatable_option(Zhao.command("tool"), "--include <path>", ""), ["--include"]) == Zhao.Error{"zhao.optionMissingArgument", "option '--include' argument missing"} : Zhao.Outcome}
+
+law repeatable_option_requires_value_syntax:
+  {Zhao.parse(Zhao.repeatable_option(Zhao.command("tool"), "--include [path]", ""), []) == Zhao.Error{"zhao.invalidDefinition", "repeatable options require <value> syntax"} : Zhao.Outcome}
+
 law negated_option_defaults_true:
   {Zhao.parse(Zhao.option(Zhao.command("tool"), "--no-color", ""), []) == Zhao.Parsed{Zhao.Invocation{["tool"], [Zhao.Binding{"color", Zhao.Boolean{True{}}}], []}} : Zhao.Outcome}
 

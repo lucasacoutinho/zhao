@@ -36,6 +36,7 @@ type OptionKind is Data:
   Negated{}
   RequiredValue{name: String}
   OptionalValue{name: String}
+  RepeatedValue{name: String}
 
 type Option is Data:
   Option{flags: String, short: String, long: String, key: String, description: String, kind: OptionKind, fallback: Maybe<&2, Value>, mandatory: Bool}
@@ -237,6 +238,18 @@ def option_default(cmd: Command, flags: String, desc: String, value: String) -> 
 
 def required_option(cmd: Command, flags: String, desc: String) -> Command:
   option.add(cmd, option.make(flags, desc, None{}, True{}))
+
+def option.repeatable(result: Result<&2, &2, String, Option>) -> Result<&2, &2, String, Option>:
+  match result:
+    case Fail{message}:
+      Fail{message}
+    case Done{Option{flags, short, long, key, desc, RequiredValue{name}, fallback, mandatory}}:
+      Done{Option{flags, short, long, key, desc, RepeatedValue{name}, fallback, mandatory}}
+    case Done{_}:
+      Fail{"repeatable options require <value> syntax"}
+
+def repeatable_option(cmd: Command, flags: String, desc: String) -> Command:
+  option.add(cmd, option.repeatable(option.make(flags, desc, None{}, False{})))
 
 def argument.make.valid(syntax: String, name: String, desc: String, required: Bool, variadic: Bool, fallback: Maybe<&2, String>, valid: Bool) -> Result<&2, &2, String, Argument>:
   match valid:
@@ -480,6 +493,8 @@ def option.fallback(kind: OptionKind, fallback: Maybe<&2, Value>) -> Maybe<&2, V
       Some{value}
     case Negated{} None{}:
       Some{Boolean{True{}}}
+    case RepeatedValue{_} None{}:
+      Some{Many{[]}}
     case _ None{}:
       None{}
 
@@ -584,12 +599,20 @@ def parse.word(+cmd: Command, names: List<&2, String>, options: List<&2, Option>
   Command{_, _, _, _, _, _, +children, _} = cmd
   parse.word.child(command.find(children, word), children, cmd, names, options, values, words, word, remaining)
 
-def parse.required(remaining: List<&2, String>, cmd: Command, names: List<&2, String>, options: List<&2, Option>, values: List<&2, Binding>, words: List<&2, String>, key: String, token: String) -> Scan:
+def option.store(kind: OptionKind, +values: List<&2, Binding>, +key: String, text: String) -> List<&2, Binding>:
+  match kind:
+    case RepeatedValue{_}:
+      previous = value.many(bindings.get(values, key))
+      bindings.set(values, key, Many{List.append(&2, String, previous, [text])})
+    case _:
+      bindings.set(values, key, Text{text})
+
+def parse.required(remaining: List<&2, String>, cmd: Command, names: List<&2, String>, options: List<&2, Option>, values: List<&2, Binding>, words: List<&2, String>, key: String, token: String, kind: OptionKind) -> Scan:
   match remaining:
     case Nil{}:
       Finished{Error{"zhao.optionMissingArgument", "option '" ++ token ++ "' argument missing"}}
     case text <> tail:
-      Active{cmd, names, options, bindings.set(values, key, Text{text}), words, False{}, tail}
+      Active{cmd, names, options, option.store(kind, values, key, text), words, False{}, tail}
 
 def parse.optional.value(cmd: Command, names: List<&2, String>, options: List<&2, Option>, values: List<&2, Binding>, words: List<&2, String>, key: String, text: String, tail: List<&2, String>, consume: Bool) -> Scan:
   match consume:
@@ -630,12 +653,12 @@ def parse.option(found: Maybe<&2, Option>, attached: Maybe<&2, String>, cmd: Com
       Finished{Error{"zhao.unknownOption", "unknown option '" ++ token ++ "'"}}
     case Some{Option{_, _, _, _, _, Negated{}, _, _}} Some{_}:
       Finished{Error{"zhao.unknownOption", "unknown option '" ++ token ++ "'"}}
-    case Some{Option{_, _, _, key, _, _, _, _}} Some{text}:
-      Active{cmd, names, options, bindings.set(values, key, Text{text}), words, False{}, remaining}
-    case Some{Option{_, _, _, key, _, RequiredValue{_}, _, _}} None{}:
-      parse.required(remaining, cmd, names, options, values, words, key, token)
+    case Some{Option{_, _, _, key, _, kind, _, _}} Some{text}:
+      Active{cmd, names, options, option.store(kind, values, key, text), words, False{}, remaining}
     case Some{Option{_, _, _, key, _, OptionalValue{_}, _, _}} None{}:
       parse.optional(remaining, cmd, names, options, values, words, key)
+    case Some{Option{_, _, _, key, _, kind, _, _}} None{}:
+      parse.required(remaining, cmd, names, options, values, words, key, token, kind)
 
 def parse.flag.long(split: String & Maybe<&2, String>, cmd: Command, names: List<&2, String>, +options: List<&2, Option>, values: List<&2, Binding>, words: List<&2, String>, token: String, remaining: List<&2, String>) -> Scan:
   (+flag, attached) = split

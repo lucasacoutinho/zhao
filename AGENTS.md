@@ -8,7 +8,7 @@ behavior in the handler. Read `bend guide` before writing Bend code.
 
 ```bend
 import Base
-import 0x64a14ed3ebe66ae2700afc3c3bafd113/zhao.bend as Z
+import 0x014d1ec5074b05cc46cbfd40d4033fe1/zhao.bend as Z
 ```
 
 Bend downloads and verifies this immutable package on the first run. When
@@ -22,7 +22,7 @@ arguments. This is a complete application:
 
 ```bend
 import Base
-import 0x64a14ed3ebe66ae2700afc3c3bafd113/zhao.bend as Z
+import 0x014d1ec5074b05cc46cbfd40d4033fe1/zhao.bend as Z
 
 def program() -> Z.Command:
   cmd = Z.command("pack")
@@ -65,6 +65,7 @@ multiple fields.
 | `Z.option(cmd, "--no-color", "...")` | True by default, false when supplied | `Z.value.enabled(Z.get(input, "color"))` |
 | `Z.option(cmd, "--port <number>", "...")` | Option whose value is required when supplied | `Z.value.text(Z.get(input, "port"), "")` |
 | `Z.required_option(cmd, "--token <value>", "...")` | Option that must appear | `Z.value.text(Z.get(input, "token"), "")` |
+| `Z.repeatable_option(cmd, "-I, --include <path>", "...")` | One value per occurrence, collected in order | `Z.value.many(Z.get(input, "include"))` |
 | `Z.option(cmd, "--color [name]", "...")` | Optional value: boolean true when supplied alone, text with a value | Match `Z.get(input, "color")` |
 | `Z.argument(cmd, "<file>", "...")` | Required positional argument | `Z.value.text(Z.arg(input, "file"), "")` |
 | `Z.argument(cmd, "[file]", "...")` | Optional positional argument | `Z.value.text(Z.arg(input, "file"), "fallback")` |
@@ -111,8 +112,9 @@ outcome. `Z.help(cmd)` renders root help without parsing or IO.
 ## Respect parsing rules
 
 - Options need a long name; a one-letter short alias is optional.
-- Repeated scalar options keep the last value. Zhao does not collect repeated
-  option values into a list.
+- Repeated scalar options keep the last value. Use `repeatable_option` with
+  `<value>` syntax to collect every occurrence, including duplicates and empty
+  values. It returns `Many{[]}` when omitted and consumes one value per flag.
 - Required-value options consume the next token even if it starts with `-`.
   Optional values consume non-options or negative numbers; use `--color=-x`
   for another dashed value.
