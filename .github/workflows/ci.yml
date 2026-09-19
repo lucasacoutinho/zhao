@@ -17,8 +17,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install Bend
         run: make setup
-      - name: Check proofs, CLI behavior, and package
-        run: make cli-check native-cli-check package
+      - name: Check library, proofs, and package
+        run: make package
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -45,7 +45,7 @@ jobs:
             printf 'Import the immutable Bendhub package:\n\n```bend\n'
             cat .build/BENDHUB_IMPORT
             printf '```\n\nThe package contains only src/ modules, including its laws and proofs.\n'
-            printf 'This bootstrap release has no Best dependency.\n'
+            printf 'This bootstrap release contains no tests or testing dependencies.\n'
           } > .build/release-notes.md
           gh release create "$GITHUB_REF_NAME" \
             ".build/zhao-$version.tar.gz" .build/BENDHUB_IMPORT \

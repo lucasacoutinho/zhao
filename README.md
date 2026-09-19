@@ -14,7 +14,7 @@ Zhao is a bootstrap release targeting Bend 2.0.16. It follows [Commander.js](htt
 
 ## Quick start
 
-Import Zhao 0.1.0 directly from Bendhub. Bend downloads and verifies the package on the first run:
+Import Zhao directly from Bendhub. Bend downloads and verifies the package on the first run:
 
 ```bend
 import Base
@@ -94,22 +94,18 @@ Arguments use `<required>`, `[optional]`, `<many...>`, or `[many...]` syntax. Re
 ```sh
 make setup
 make check
-make cli-check
-make native-cli-check
 make package
 ```
 
 `make setup` installs the pinned compiler under `.tools/` after verifying its checksum. The installer supports Linux and macOS on x64 and arm64; native builds require Clang. Set `BEND=/absolute/path/to/bend` to use another compiler.
 
-`make check` checks the library and [proofs](src/PROOF.bend). The CLI checks exercise output and exit codes through Bend and compiled binaries. `make package` builds a source archive under `.build/` and checks it outside the checkout. These commands run from a standalone Zhao checkout without Python or Best.
-
-The optional parser suite in `tests/` currently imports an adjacent Best checkout. `make test` runs it; `make native-test` compares its compiled output on one and four CPU threads. It stays outside the bootstrap package and CI until Best has a stable published release.
+`make check` checks the library and [proofs](src/PROOF.bend). `make package` builds a source archive under `.build/` and checks it outside the checkout. This bootstrap repository contains no tests or testing dependencies. Read [AGENTS.md](AGENTS.md) for guidance on building CLIs with Zhao.
 
 ### Releases
 
 The publishable package lives in `src/`, including [LAWS.bend](src/LAWS.bend) and [PROOF.bend](src/PROOF.bend). [Bendhub](https://hub.bend-lang.com) identifies packages by content hash; GitHub releases associate those hashes with Zhao versions.
 
-Pushing a tag named `v` plus `VERSION` runs CI, publishes to Bendhub, and creates a GitHub release with the source archive and a `BENDHUB_IMPORT` file. CI checks proofs, CLI behavior on both backends, and packaging before publishing. Bendhub needs no account or token. `make publish` performs a manual upload and writes the import statement to `.build/BENDHUB_IMPORT`.
+Pushing a tag named `v` plus `VERSION` runs CI, publishes to Bendhub, and creates a GitHub release with the source archive and a `BENDHUB_IMPORT` file. CI checks the library, proofs, and packaging before publishing. Bendhub needs no account or token. `make publish` performs a manual upload, verifies the downloaded package, and writes the import statement to `.build/BENDHUB_IMPORT`.
 
 ## Status and limits
 

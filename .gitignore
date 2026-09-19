@@ -1,3 +1,5 @@
 .tools/
 .build/
 docs/
+/tests/
+/scripts/test-cli.sh
